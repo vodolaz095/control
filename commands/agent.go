@@ -4,7 +4,9 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"google.golang.org/grpc/credentials"
 	"io/ioutil"
+	"net"
 	"time"
 
 	"gitflic.ru/vodolaz095/control/config"
@@ -13,7 +15,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 var startAgentCommand = &cobra.Command{
@@ -62,24 +63,33 @@ var startAgentCommand = &cobra.Command{
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		conn, err := grpc.DialContext(ctx, config.Server,
-			grpc.WithAuthority("queue2.vodolaz095.life"),
+			grpc.WithContextDialer(func(ctx context.Context, s string) (tlsCon net.Conn, err error) {
+				logger.Printf("Dialing with TLS: %s", s)
+				when, ok := ctx.Deadline()
+				if ok {
+					dialer := net.Dialer{Deadline: when}
+					tlsCon, err = tls.DialWithDialer(&dialer, "tcp", s, cfg)
+					return
+				}
+				tlsCon, err = tls.Dial("tcp", s, cfg)
+				return
+			}),
+			//grpc.WithAuthority("queue2.vodolaz095.life"), // means nothing?
 			grpc.WithTransportCredentials(credentials.NewTLS(cfg)),
-			//grpc.WithBlock(),
+			grpc.WithBlock(),
 		)
 		if err != nil {
 			logger.Fatalf("%s : while dialing %s", err, config.Server)
 		}
-
 		logger.Printf("Connection established to %s", conn.Target())
 
 		client := pb.NewSimpleClient(conn)
-
 		resp, err := client.GetLine(ctx, &pb.SimpleRequest{Data: "something"})
 		if err != nil {
 			logger.Fatalf("%s : while getting response for getLine", err)
 		}
+
 		logger.Printf("Response: %s", resp.String())
-		time.Sleep(time.Second)
 		err = conn.Close()
 		if err != nil {
 			logger.Fatalf("%s : while closing connection", err)
