@@ -13,7 +13,7 @@ message StringRequest {
 message StringResponse {
   string data = 1;
 }
-
+// Control is main service definition
 service Control {
   rpc GetLine (StringRequest) returns (StringResponse);
   rpc SubscribeToOrders(StringRequest) returns (stream Order);

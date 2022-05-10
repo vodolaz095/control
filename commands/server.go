@@ -1,31 +1,21 @@
 package commands
 
 import (
-	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"google.golang.org/grpc/credentials"
 	"io/ioutil"
 	"log"
 
 	"gitflic.ru/vodolaz095/control/config"
 	"gitflic.ru/vodolaz095/control/pb"
+	"gitflic.ru/vodolaz095/control/server"
+
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 
 	"github.com/spf13/cobra"
 )
-
-type RPC struct {
-	pb.UnimplementedControlServer
-	Logger *log.Logger
-}
-
-func (rpc *RPC) GetLine(ctx context.Context, in *pb.StringRequest) (*pb.StringResponse, error) {
-	rv := in.Data
-	rpc.Logger.Printf("Receive: %v", rv)
-	return &pb.StringResponse{Data: rv}, nil
-}
 
 var startServerCommand = &cobra.Command{
 	Use:     "server",
@@ -73,7 +63,7 @@ var startServerCommand = &cobra.Command{
 
 		logger.Printf("Listening for incoming connections...")
 
-		rpc := new(RPC)
+		rpc := new(server.RPC)
 		rpc.Logger = logger
 
 		s := grpc.NewServer(grpc.Creds(credentials.NewTLS(cfg)))

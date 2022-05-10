@@ -79,4 +79,4 @@ agent:
 	forego start agent
 
 
-.PHONY: build
+.PHONY: build server

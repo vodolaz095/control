@@ -24,7 +24,8 @@ var startAgentCommand = &cobra.Command{
 	Example: " control agent",
 	Run: func(cmd *cobra.Command, args []string) {
 		logger.Println("Starting agent...")
-		config.LoadFromEnvironment(&config.Server, "SERVER")
+		config.LoadFromEnvironment(&config.Server, "SERVER_ADDR")
+		config.LoadFromEnvironment(&config.ServerName, "SERVER_NAME")
 
 		config.LoadFromEnvironment(&config.ClientKey, "CLIENT_KEY")
 		logger.Printf("Loading client key from %s...", config.ClientKey)
@@ -56,7 +57,7 @@ var startAgentCommand = &cobra.Command{
 		)
 		cfg := &tls.Config{
 			ClientAuth:   tls.RequireAndVerifyClientCert,
-			ServerName:   "queue2.vodolaz095.life",
+			ServerName:   config.ServerName,
 			RootCAs:      authority,
 			Certificates: []tls.Certificate{cert},
 		}
@@ -88,8 +89,14 @@ var startAgentCommand = &cobra.Command{
 		if err != nil {
 			logger.Fatalf("%s : while getting response for getLine", err)
 		}
-
 		logger.Printf("Response: %s", resp.String())
+
+		task, err := client.GetTaskByName(ctx, &pb.StringRequest{Data: "something"})
+		if err != nil {
+			logger.Fatalf("%s : while getting task something", err)
+		}
+		logger.Printf("Response: %s", task.String())
+
 		err = conn.Close()
 		if err != nil {
 			logger.Fatalf("%s : while closing connection", err)
