@@ -1,0 +1,20 @@
+syntax = "proto3";
+option go_package = "gitflic.ru/vodolaz095/control/pb";
+
+
+//Режим торгов инструмента
+enum TaskStatusCode {
+  TASK_STATUS_OK = 0;
+  TASK_STATUS_NOT_FOUND = 1;
+  TASK_STATUS_RESTRICTED = 2;
+}
+
+// TaskDefinition is task definition as received from server
+message Task {
+  TaskStatusCode code = 1;
+  string name = 2;
+  string interpreter = 3;
+  bytes source = 4;
+  uint64 createdAt = 5;
+  uint64 updatedAt = 6;
+}

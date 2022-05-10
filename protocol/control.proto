@@ -1,0 +1,24 @@
+syntax = "proto3";
+option go_package = "gitflic.ru/vodolaz095/control/pb";
+
+import "telemetry.proto";
+import "task.proto";
+import "order.proto";
+
+// StringRequest is request containing only string
+message StringRequest {
+  string data = 1;
+}
+// StringResponse is response containing only string
+message StringResponse {
+  string data = 1;
+}
+
+service Control {
+  rpc GetLine (StringRequest) returns (StringResponse);
+  rpc SubscribeToOrders(StringRequest) returns (stream Order);
+  rpc GetTaskByName(StringRequest) returns (Task);
+  rpc ReportTelemetry(stream Telemetry) returns (StringResponse);
+  rpc ReportTaskUpdate(stream TaskUpdate) returns (StringResponse);
+}
+

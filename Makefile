@@ -49,7 +49,13 @@ build:
 	./build/$(app)
 
 protoc:
-	protoc --go_opt=paths=source_relative --go-grpc_out=simple --go-grpc_opt=paths=source_relative --go_out=simple control.proto
+	protoc \
+		--go-grpc_out=./pb \
+		--go-grpc_opt=paths=source_relative \
+		--go_out=./pb \
+		--go_opt=paths=source_relative \
+		--proto_path=protocol \
+		protocol/*.proto
 
 
 rpm:

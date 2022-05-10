@@ -1,0 +1,29 @@
+syntax = "proto3";
+option go_package = "gitflic.ru/vodolaz095/control/pb";
+
+// TaskUpdate used to report task status
+message TaskUpdate {
+  int64 timestamp = 1;
+  int32 nanos = 2;
+  string taskID = 3;
+  string data = 4;
+  bool finished = 5;
+  int32 exitCode = 6;
+}
+
+// Argument is one of elements passed to Order
+message Argument {
+  string argument = 1;
+}
+// Environment is set to POSIX process environment while executing Order
+message Environment {
+  string key = 1;
+  string value = 2;
+}
+
+// Order defines Task with Arguments and Environment attached that agent will try to execute
+message Order {
+  string taskName = 1;
+  repeated Argument argument = 2;
+  repeated Environment environment = 3;
+}

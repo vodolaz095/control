@@ -10,21 +10,21 @@ import (
 	"log"
 
 	"gitflic.ru/vodolaz095/control/config"
-	pb "gitflic.ru/vodolaz095/control/simple"
+	"gitflic.ru/vodolaz095/control/pb"
 	"google.golang.org/grpc"
 
 	"github.com/spf13/cobra"
 )
 
 type RPC struct {
-	pb.UnimplementedSimpleServer
+	pb.UnimplementedControlServer
 	Logger *log.Logger
 }
 
-func (rpc *RPC) GetLine(ctx context.Context, in *pb.SimpleRequest) (*pb.SimpleResponse, error) {
+func (rpc *RPC) GetLine(ctx context.Context, in *pb.StringRequest) (*pb.StringResponse, error) {
 	rv := in.Data
 	rpc.Logger.Printf("Receive: %v", rv)
-	return &pb.SimpleResponse{Data: rv}, nil
+	return &pb.StringResponse{Data: rv}, nil
 }
 
 var startServerCommand = &cobra.Command{
@@ -77,7 +77,7 @@ var startServerCommand = &cobra.Command{
 		rpc.Logger = logger
 
 		s := grpc.NewServer(grpc.Creds(credentials.NewTLS(cfg)))
-		pb.RegisterSimpleServer(s, rpc)
+		pb.RegisterControlServer(s, rpc)
 
 		err = s.Serve(listener)
 		if err != nil {

@@ -4,17 +4,17 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"google.golang.org/grpc/credentials"
 	"io/ioutil"
 	"net"
 	"time"
 
 	"gitflic.ru/vodolaz095/control/config"
-	pb "gitflic.ru/vodolaz095/control/simple"
+	"gitflic.ru/vodolaz095/control/pb"
 
 	"github.com/spf13/cobra"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 var startAgentCommand = &cobra.Command{
@@ -83,8 +83,8 @@ var startAgentCommand = &cobra.Command{
 		}
 		logger.Printf("Connection established to %s", conn.Target())
 
-		client := pb.NewSimpleClient(conn)
-		resp, err := client.GetLine(ctx, &pb.SimpleRequest{Data: "something"})
+		client := pb.NewControlClient(conn)
+		resp, err := client.GetLine(ctx, &pb.StringRequest{Data: "something"})
 		if err != nil {
 			logger.Fatalf("%s : while getting response for getLine", err)
 		}

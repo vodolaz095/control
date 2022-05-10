@@ -1,0 +1,11 @@
+syntax = "proto3";
+option go_package = "gitflic.ru/vodolaz095/control/pb";
+
+// Telemetry used to stream agent system stats to server
+message Telemetry {
+  float load1 = 1;
+  float load2 = 2;
+  float load3 = 3;
+  int64 memoryUsed = 4;
+  int64 memoryFree = 5;
+}
