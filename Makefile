@@ -13,9 +13,17 @@ clean:
 	go clean
 
 deps:
+	which protoc
+	which upx
+
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
+
 	go mod download
 	go mod verify
 	go mod tidy
+
+
 
 lint:
 	# format code
@@ -39,6 +47,10 @@ build:
 	go build -ldflags "-X main.Version=$(ver)" -o build/$(app) main.go
 	upx build/$(app)
 	./build/$(app)
+
+protoc:
+	protoc --go_opt=paths=source_relative --go-grpc_out=simple --go-grpc_opt=paths=source_relative --go_out=simple control.proto
+
 
 rpm:
 	which rpmbuild

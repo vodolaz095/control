@@ -1,15 +1,31 @@
 package commands
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"gitflic.ru/vodolaz095/control/config"
+	"google.golang.org/grpc/credentials"
 	"io/ioutil"
 	"log"
 
+	"gitflic.ru/vodolaz095/control/config"
+	pb "gitflic.ru/vodolaz095/control/simple"
+	"google.golang.org/grpc"
+
 	"github.com/spf13/cobra"
 )
+
+type RPC struct {
+	pb.UnimplementedSimpleServer
+	Logger *log.Logger
+}
+
+func (rpc *RPC) GetLine(ctx context.Context, in *pb.SimpleRequest) (*pb.SimpleResponse, error) {
+	rv := in.Data
+	rpc.Logger.Printf("Receive: %v", rv)
+	return &pb.SimpleResponse{Data: rv}, nil
+}
 
 var startServerCommand = &cobra.Command{
 	Use:     "server",
@@ -54,43 +70,53 @@ var startServerCommand = &cobra.Command{
 		if err != nil {
 			logger.Fatalf("%s : while starting server on %s:%s", err, config.ADDR, config.PORT)
 		}
+
 		logger.Printf("Listening for incoming connections...")
-		for {
-			con, err := listener.Accept()
-			if err != nil {
-				logger.Printf("%s : while accepting connection", err)
-				continue
-			}
-			logger.Printf("Connection from %s...", con.RemoteAddr().String())
-			// https://stackoverflow.com/a/43606908/1885921
-			err = con.(*tls.Conn).Handshake()
-			if err != nil {
-				logger.Printf("%s : while handshaking connection", err)
-				continue
-			}
+		s := grpc.NewServer(grpc.Creds(credentials.NewTLS(cfg)))
+		rpc := new(RPC)
+		pb.RegisterSimpleServer(s, rpc)
 
-			logger.Printf("Handshake complete - %t", con.(*tls.Conn).ConnectionState().HandshakeComplete)
-
-			for _, cert := range con.(*tls.Conn).ConnectionState().PeerCertificates {
-				logger.Printf("PeerCertificate valid for %s", cert.Subject.String())
-			}
-			logger.Printf("Verified chains...")
-			for _, chain := range con.(*tls.Conn).ConnectionState().VerifiedChains {
-				for _, cert := range chain {
-					logger.Printf("Client cert valid for %s", cert.Subject.String())
-				}
-			}
-
-			_, err = fmt.Fprintln(con, "HELLO")
-			if err != nil {
-				logger.Printf("%s : while accepting connection", err)
-				con.Close()
-				continue
-			}
-			err = con.Close()
-			if err != nil {
-				logger.Printf("%s : while accepting connection", err)
-			}
+		err = s.Serve(listener)
+		if err != nil {
+			log.Fatalf("%s : while starting grpc server on %s:%s", err, config.ADDR, config.PORT)
 		}
+
+		//for {
+		//	con, err := listener.Accept()
+		//	if err != nil {
+		//		logger.Printf("%s : while accepting connection", err)
+		//		continue
+		//	}
+		//	logger.Printf("Connection from %s...", con.RemoteAddr().String())
+		//	// https://stackoverflow.com/a/43606908/1885921
+		//	err = con.(*tls.Conn).Handshake()
+		//	if err != nil {
+		//		logger.Printf("%s : while handshaking connection", err)
+		//		continue
+		//	}
+		//
+		//	logger.Printf("Handshake complete - %t", con.(*tls.Conn).ConnectionState().HandshakeComplete)
+		//
+		//	for _, cert := range con.(*tls.Conn).ConnectionState().PeerCertificates {
+		//		logger.Printf("PeerCertificate valid for %s", cert.Subject.String())
+		//	}
+		//	logger.Printf("Verified chains...")
+		//	for _, chain := range con.(*tls.Conn).ConnectionState().VerifiedChains {
+		//		for _, cert := range chain {
+		//			logger.Printf("Client cert valid for %s", cert.Subject.String())
+		//		}
+		//	}
+		//
+		//	_, err = fmt.Fprintln(con, "HELLO")
+		//	if err != nil {
+		//		logger.Printf("%s : while accepting connection", err)
+		//		con.Close()
+		//		continue
+		//	}
+		//	err = con.Close()
+		//	if err != nil {
+		//		logger.Printf("%s : while accepting connection", err)
+		//	}
+		//}
 	},
 }
