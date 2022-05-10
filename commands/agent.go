@@ -1,13 +1,19 @@
 package commands
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"gitflic.ru/vodolaz095/control/config"
-	"github.com/spf13/cobra"
 	"io/ioutil"
-	"log"
 	"time"
+
+	"gitflic.ru/vodolaz095/control/config"
+	pb "gitflic.ru/vodolaz095/control/simple"
+
+	"github.com/spf13/cobra"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 var startAgentCommand = &cobra.Command{
@@ -31,7 +37,7 @@ var startAgentCommand = &cobra.Command{
 		}
 		logger.Printf("Server certificate loaded!")
 
-		log.Printf("Preparing to start client connecting to %s with certificate from %s",
+		logger.Printf("Preparing to start client connecting to %s with certificate from %s",
 			config.Server, config.ClientCert,
 		)
 
@@ -44,7 +50,7 @@ var startAgentCommand = &cobra.Command{
 		authority := x509.NewCertPool()
 		authority.AppendCertsFromPEM(certificateAuthorityData)
 
-		log.Printf("Preparing to start client connecting to %s with certificate from %s",
+		logger.Printf("Preparing to start client connecting to %s with certificate from %s",
 			config.Server, config.ClientCert,
 		)
 		cfg := &tls.Config{
@@ -53,19 +59,33 @@ var startAgentCommand = &cobra.Command{
 			RootCAs:      authority,
 			Certificates: []tls.Certificate{cert},
 		}
-		conn, err := tls.Dial("tcp", config.Server, cfg)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		conn, err := grpc.DialContext(ctx, config.Server,
+			grpc.WithAuthority("queue2.vodolaz095.life"),
+			grpc.WithTransportCredentials(credentials.NewTLS(cfg)),
+			//grpc.WithBlock(),
+		)
 		if err != nil {
-			log.Fatalf("%s : while dialing %s", err, config.Server)
+			logger.Fatalf("%s : while dialing %s", err, config.Server)
 		}
-		data, err := ioutil.ReadAll(conn)
+
+		logger.Printf("Connection established to %s", conn.Target())
+
+		client := pb.NewSimpleClient(conn)
+
+		resp, err := client.GetLine(ctx, &pb.SimpleRequest{Data: "something"})
 		if err != nil {
-			log.Fatalf("%s : while reading all data from server", err)
+			logger.Fatalf("%s : while getting response for getLine", err)
 		}
-		logger.Printf("Response: %s", string(data))
+		logger.Printf("Response: %s", resp.String())
 		time.Sleep(time.Second)
 		err = conn.Close()
 		if err != nil {
-			log.Fatalf("%s : while closing connection", err)
+			logger.Fatalf("%s : while closing connection", err)
 		}
 	},
 }
+
+// Good read
+// https://stackoverflow.com/questions/71976729/golang-tls-handshake-error-first-record-does-not-look-like-a-tls-handshake

@@ -72,8 +72,11 @@ var startServerCommand = &cobra.Command{
 		}
 
 		logger.Printf("Listening for incoming connections...")
-		s := grpc.NewServer(grpc.Creds(credentials.NewTLS(cfg)))
+
 		rpc := new(RPC)
+		rpc.Logger = logger
+
+		s := grpc.NewServer(grpc.Creds(credentials.NewTLS(cfg)))
 		pb.RegisterSimpleServer(s, rpc)
 
 		err = s.Serve(listener)
