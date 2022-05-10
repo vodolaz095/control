@@ -62,6 +62,7 @@ var startServerCommand = &cobra.Command{
 				continue
 			}
 			logger.Printf("Connection from %s...", con.RemoteAddr().String())
+			// https://stackoverflow.com/a/43606908/1885921
 			err = con.(*tls.Conn).Handshake()
 			if err != nil {
 				logger.Printf("%s : while handshaking connection", err)
