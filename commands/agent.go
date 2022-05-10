@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"io/ioutil"
 	"log"
+	"time"
 )
 
 var startAgentCommand = &cobra.Command{
@@ -47,6 +48,7 @@ var startAgentCommand = &cobra.Command{
 			config.Server, config.ClientCert,
 		)
 		cfg := &tls.Config{
+			ClientAuth:   tls.RequireAndVerifyClientCert,
 			ServerName:   "queue2.vodolaz095.life",
 			RootCAs:      authority,
 			Certificates: []tls.Certificate{cert},
@@ -60,5 +62,10 @@ var startAgentCommand = &cobra.Command{
 			log.Fatalf("%s : while reading all data from server", err)
 		}
 		logger.Printf("Response: %s", string(data))
+		time.Sleep(time.Second)
+		err = conn.Close()
+		if err != nil {
+			log.Fatalf("%s : while closing connection", err)
+		}
 	},
 }

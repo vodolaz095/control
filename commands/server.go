@@ -62,6 +62,24 @@ var startServerCommand = &cobra.Command{
 				continue
 			}
 			logger.Printf("Connection from %s...", con.RemoteAddr().String())
+			err = con.(*tls.Conn).Handshake()
+			if err != nil {
+				logger.Printf("%s : while handshaking connection", err)
+				continue
+			}
+
+			logger.Printf("Handshake complete - %t", con.(*tls.Conn).ConnectionState().HandshakeComplete)
+
+			for _, cert := range con.(*tls.Conn).ConnectionState().PeerCertificates {
+				logger.Printf("PeerCertificate valid for %s", cert.Subject.String())
+			}
+			logger.Printf("Verified chains...")
+			for _, chain := range con.(*tls.Conn).ConnectionState().VerifiedChains {
+				for _, cert := range chain {
+					logger.Printf("Client cert valid for %s", cert.Subject.String())
+				}
+			}
+
 			_, err = fmt.Fprintln(con, "HELLO")
 			if err != nil {
 				logger.Printf("%s : while accepting connection", err)
