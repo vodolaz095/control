@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"gitflic.ru/vodolaz095/control/agent"
 	"io/ioutil"
 	"net"
 	"time"
@@ -96,6 +97,8 @@ var startAgentCommand = &cobra.Command{
 			logger.Fatalf("%s : while getting task something", err)
 		}
 		logger.Printf("Response: %s", task.String())
+
+		agent.StartReportingTelemetry(client, logger)
 
 		err = conn.Close()
 		if err != nil {
