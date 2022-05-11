@@ -98,7 +98,8 @@ var startAgentCommand = &cobra.Command{
 		}
 		logger.Printf("Response: %s", task.String())
 
-		agent.StartReportingTelemetry(client, logger)
+		go agent.StartReportingTelemetry(client, logger)
+		agent.StartTaskLoop("agent", client, logger)
 
 		err = conn.Close()
 		if err != nil {
