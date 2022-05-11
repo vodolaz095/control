@@ -2,6 +2,7 @@ package server
 
 import (
 	"io"
+	"time"
 
 	"gitflic.ru/vodolaz095/control/pb"
 )
@@ -21,6 +22,10 @@ func (rpc *RPC) ReportTelemetry(server pb.Control_ReportTelemetryServer) error {
 		if err != nil {
 			return err
 		}
-		rpc.Logger.Printf("Telemetry received %v %v %v", telemetry.Load1, telemetry.Load2, telemetry.Load3)
+		if telemetry != nil {
+			rpc.Logger.Printf("Telemetry received %v %v %v", telemetry.Load1, telemetry.Load2, telemetry.Load3)
+		} else {
+			time.Sleep(10 * time.Millisecond)
+		}
 	}
 }
