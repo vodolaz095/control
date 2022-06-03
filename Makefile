@@ -57,6 +57,13 @@ protoc:
 		--proto_path=protocol \
 		protocol/*.proto
 
+js:
+	protoc \
+		--js_out=import_style=commonjs:./js/ \
+		--proto_path=protocol \
+		protocol/*.proto
+
+#$ protoc -style=commonjs  ,binary:. messages.proto base.proto
 
 rpm:
 	which rpmbuild
@@ -79,4 +86,4 @@ agent:
 	forego start agent
 
 
-.PHONY: build server agent
+.PHONY: build server agent js
