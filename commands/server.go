@@ -17,6 +17,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// good read
+// https://stackoverflow.com/a/43606908/1885921
+
 var startServerCommand = &cobra.Command{
 	Use:     "server",
 	Short:   "Запустить программу в режиме сервера",
@@ -49,6 +52,29 @@ var startServerCommand = &cobra.Command{
 
 		logger.Printf("Preparing to start server on %s:%s...", config.ADDR, config.PORT)
 		cfg := &tls.Config{
+			GetConfigForClient: func(info *tls.ClientHelloInfo) (*tls.Config, error) {
+				logger.Printf("Client uses SNI to talk to %s...", info.ServerName)
+				return nil, nil
+			},
+			VerifyPeerCertificate: func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) (err error) {
+				var clientCert *x509.Certificate
+				for _, oneOfClientCerts := range rawCerts {
+					clientCert, err = x509.ParseCertificate(oneOfClientCerts)
+					if err != nil {
+						return
+					}
+					logger.Printf("Client certificate subject %s", clientCert.Subject.String())
+					if clientCert.Subject.CommonName != "snow.local" {
+						return fmt.Errorf("only snow.local is trusted")
+					}
+				}
+				for i, chains := range verifiedChains {
+					for j, chain := range chains {
+						logger.Printf("Peer chain %v:%v subject %s", i, j, chain.Subject.String())
+					}
+				}
+				return nil
+			},
 			ClientAuth:   tls.RequireAndVerifyClientCert,
 			ClientCAs:    authority,
 			Certificates: []tls.Certificate{cert},
